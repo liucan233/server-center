@@ -32,3 +32,14 @@ export const saveUploadFile = async (bf: Buffer) => {
 export const removeUploadFile = (filePath: string) => {
   fs.rm(filePath);
 };
+
+export const getErrMsg = (err: unknown) => {
+  if (err instanceof Error) {
+    return err.message;
+  } else if (typeof err === 'string') {
+    return err;
+  } else if (!err) {
+    return '暂无错无内容';
+  }
+  return JSON.stringify(err);
+};

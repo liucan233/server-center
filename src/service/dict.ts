@@ -18,15 +18,17 @@ const howManySyllableHeaders = {
   'upgrade-insecure-requests': '1',
 };
 
+export type TParseSyllableResult = {
+  syllables: Array<{ span: string; stress?: boolean; pronounce: string }>;
+  pronounce: string;
+  remoteRes?: string;
+  statusMsg?: string;
+};
+
 const parseSyllableResult = (htmlText: string, word: string) => {
-  const result: {
-    syllables: Array<{ text: string; stress?: boolean }>;
-    pronounce: string;
-    errRemoteRes?: string;
-    statusMsg?: string;
-  } = {
+  const result: TParseSyllableResult = {
     syllables: [],
-    errRemoteRes: htmlText,
+    remoteRes: htmlText,
     pronounce: `https://www.howmanysyllables.com/pronounce/${word}.mp3`,
   };
   let statusMsg = '开始解析';
@@ -37,30 +39,38 @@ const parseSyllableResult = (htmlText: string, word: string) => {
     const contentResult = contentRegExp.exec(htmlText)?.[0];
     if (contentResult) {
       statusMsg = '读取到音节内容';
-      result.errRemoteRes = contentResult;
+      result.remoteRes = contentResult;
       const stressRegExp = /tress.+?nbsp;.+?data-nosnippet>(.+?)<\/span><br/;
+      const pronounceRegExp = /pronounce.+?nbsp;.+?data-nosnippet>(.+?)<\/span>/;
       // 有重读标注的音节
       const stressResult = stressRegExp.exec(contentResult)?.[1];
-      if (stressResult) {
+      // 音节发音
+      const pronounceResult = pronounceRegExp.exec(contentResult)?.[1];
+      if (stressResult && pronounceResult) {
         statusMsg = '读取到重音内容';
+        // result.remoteRes = stressResult;
         const spanArr = stressResult.split('-');
-        const spanRegExp = />(.+?)</;
+        const pronounceArr = pronounceResult.split('-');
+        if (pronounceArr.length === spanArr.length) {
+          const spanRegExp = />(.+?)</;
 
-        if (spanArr.length) {
-          statusMsg = '解析重音内容';
-          for (const s of spanArr) {
-            const text = s.trim();
-            if (text.startsWith('<')) {
-              spanRegExp.lastIndex = 0;
-              result.syllables.push({
-                text: spanRegExp.exec(text)?.[1] || text,
-                stress: true,
-              });
-            } else {
-              result.syllables.push({ text });
+          if (spanArr.length) {
+            statusMsg = '解析重音内容';
+            for (let i = 0; i < spanArr.length; i++) {
+              const span = spanArr[i].trim();
+              const pronounce = pronounceArr[i].trim();
+              if (span.startsWith('<')) {
+                spanRegExp.lastIndex = 0;
+                result.syllables.push({
+                  span: spanRegExp.exec(span)?.[1] || span,
+                  stress: true,
+                  pronounce,
+                });
+              } else {
+                result.syllables.push({ span, pronounce });
+              }
             }
           }
-          result.errRemoteRes = '';
         }
       }
     }

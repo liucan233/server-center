@@ -2,8 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
-  moduleFormat = "esm"
+  provider               = "prisma-client-js"
+  moduleFormat           = "esm"
   generatedFileExtension = "ts"
   importFileExtension    = "ts"
 }
@@ -71,10 +71,29 @@ model CommentReply {
 }
 
 model Upload {
-  id           String   @id() @default(cuid())
+  id           String        @id() @default(cuid())
   savePath     String
   fileName     String
-  createdAt    DateTime @default(now())
-  uploadUser   User     @relation(fields: [uploadUserId], references: [id])
+  createdAt    DateTime      @default(now())
+  uploadUser   User          @relation(fields: [uploadUserId], references: [id])
   uploadUserId Int
+  syllable WordSyllable?
+}
+
+model Word {
+  id        Int           @id @default(autoincrement())
+  createdAt DateTime      @default(now())
+  spell     String        @unique
+  syllable  WordSyllable?
+}
+
+model WordSyllable {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  spidersText String   @db.VarChar(2048)
+  wordId      Int      @unique // 与单词一对一
+  word        Word     @relation(fields: [wordId], references: [id])
+  jsonList    Json
+  pronounceId String   @unique
+  pronounce   Upload   @relation(fields: [pronounceId], references: [id])
 }
