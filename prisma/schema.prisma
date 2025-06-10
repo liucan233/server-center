@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  moduleFormat = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "ts"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int             @id @default(autoincrement())
+  email              String          @unique
+  name               String
+  avatar             String?
+  password           String
+  // 当前用户非@回复
+  commentArr         Comment[]
+  // 当前用户@回复
+  commentReplyArr    CommentReply[]  @relation("replyBy")
+  // 当前用户拥有的可被评论的资源
+  commentOwnArr      CommentSource[]
+  // 当前用户被@
+  commentReceivedArr CommentReply[]  @relation("replyTo")
+  Upload             Upload[]
+}
+
+model EmailVerification {
+  email     String   @unique
+  captcha   String
+  createdAt DateTime @default(now())
+}
+
+// 可以被评论的资源
+model CommentSource {
+  id         Int       @id @default(autoincrement())
+  desc       String?
+  externalId String    @unique
+  commentArr Comment[]
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id])
+}
+
+model Comment {
+  id        Int            @id @default(autoincrement())
+  sourceId  Int
+  source    CommentSource  @relation(fields: [sourceId], references: [id])
+  createdAt DateTime       @default(now())
+  content   String         @db.VarChar(2048)
+  userId    Int
+  user      User           @relation(fields: [userId], references: [id])
+  // 当前评论的子评论，可以是@当前评论，也可以是@其他评论
+  replyArr  CommentReply[]
+}
+
+model CommentReply {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  sourceId    Int
+  source      Comment  @relation(fields: [sourceId], references: [id])
+  content     String   @db.VarChar(2048)
+  userId      Int
+  user        User     @relation("replyBy", fields: [userId], references: [id])
+  replyUserId Int?
+  reply       User?    @relation("replyTo", fields: [replyUserId], references: [id])
+}
+
+model Upload {
+  id           String   @id() @default(cuid())
+  savePath     String
+  fileName     String
+  createdAt    DateTime @default(now())
+  uploadUser   User     @relation(fields: [uploadUserId], references: [id])
+  uploadUserId Int
+}

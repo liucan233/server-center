@@ -1,0 +1,10 @@
+node_modules
+local.json
+logs
+dist
+.vercel
+env/app.env
+prisma/.env
+/upload
+/api
+/prisma/client

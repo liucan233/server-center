@@ -1,0 +1,9 @@
+{
+  "verbose": false,
+  "ignore": ["**/pnpm-lock.yaml", "**/package.json", "**/README.md", "**/.gitignore", "**/.vscode/**"],
+  "watch": ["./src", "./local.json"],
+  "delay": 0.3,
+  "ext": "ts,json",
+  "execMap": {},
+  "exec": "node --import @swc-node/register/esm-register ./src/app.ts"
+}

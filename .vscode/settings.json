@@ -1,0 +1,17 @@
+{
+  "cSpell.words": ["acadmic", "aexp", "aexpsid", "JSESSIONID", "stutool", "tablelist", "teachn", "wechat"],
+  "editor.rulers": [120],
+  "eslint.enable": true,
+  "editor.formatOnPaste": false, // required
+  "editor.formatOnType": false, // required
+  "editor.formatOnSave": true, // optional
+  "editor.formatOnSaveMode": "file", // required to format on save
+  "files.autoSave": "onFocusChange",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  }
+}
