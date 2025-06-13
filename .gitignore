@@ -8,3 +8,4 @@ prisma/.env
 /upload
 /api
 /prisma/client
+/pnpm-workspace.yaml

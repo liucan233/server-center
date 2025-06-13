@@ -40,22 +40,20 @@ uploadRouter.post('/', jwtMiddleware, async (req, res) => {
 
   try {
     const savePath = await saveTask;
-    let sqlRow = await prismaClient.upload.findFirst({
+    let sqlRow = await prismaClient.upload.upsert({
       where: {
+        uploadUserId_savePath: {
+          savePath,
+          uploadUserId: res.locals.userInfo.id,
+        },
+      },
+      create: {
         fileName,
         savePath,
         uploadUserId: res.locals.userInfo.id,
       },
+      update: {},
     });
-    if (!sqlRow) {
-      sqlRow = await prismaClient.upload.create({
-        data: {
-          fileName,
-          savePath,
-          uploadUserId: res.locals.userInfo.id,
-        },
-      });
-    }
 
     res.json({
       code: ErrCode.NoError,

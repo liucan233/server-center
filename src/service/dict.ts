@@ -29,7 +29,7 @@ const parseSyllableResult = (htmlText: string, word: string) => {
   const result: TParseSyllableResult = {
     syllables: [],
     remoteRes: htmlText,
-    pronounce: `https://www.howmanysyllables.com/pronounce/${word}.mp3`,
+    pronounce: `${howManySyllableUrl}/pronounce/${word}.mp3`,
   };
   let statusMsg = '开始解析';
   if (htmlText) {
@@ -44,32 +44,32 @@ const parseSyllableResult = (htmlText: string, word: string) => {
       const pronounceRegExp = /pronounce.+?nbsp;.+?data-nosnippet>(.+?)<\/span>/;
       // 有重读标注的音节
       const stressResult = stressRegExp.exec(contentResult)?.[1];
+      const stressArr = stressResult?.split('-') || [];
       // 音节发音
       const pronounceResult = pronounceRegExp.exec(contentResult)?.[1];
-      if (stressResult && pronounceResult) {
+      const pronounceArr = pronounceResult?.split('-') || [];
+      if (
+        (stressArr.length !== 0 && pronounceArr.length !== 0) ||
+        (stressArr.length === 0 && pronounceArr.length !== 0) ||
+        (stressArr.length !== 0 && pronounceArr.length === 0)
+      ) {
         statusMsg = '读取到重音内容';
-        // result.remoteRes = stressResult;
-        const spanArr = stressResult.split('-');
-        const pronounceArr = pronounceResult.split('-');
-        if (pronounceArr.length === spanArr.length) {
-          const spanRegExp = />(.+?)</;
+        const maxLen = Math.max(stressArr.length, pronounceArr.length);
+        const spanRegExp = />(.+?)</;
 
-          if (spanArr.length) {
-            statusMsg = '解析重音内容';
-            for (let i = 0; i < spanArr.length; i++) {
-              const span = spanArr[i].trim();
-              const pronounce = pronounceArr[i].trim();
-              if (span.startsWith('<')) {
-                spanRegExp.lastIndex = 0;
-                result.syllables.push({
-                  span: spanRegExp.exec(span)?.[1] || span,
-                  stress: true,
-                  pronounce,
-                });
-              } else {
-                result.syllables.push({ span, pronounce });
-              }
-            }
+        statusMsg = '解析重音内容';
+        for (let i = 0; i < maxLen; i++) {
+          const span = stressArr[i]?.trim() || '';
+          const pronounce = pronounceArr[i]?.trim() || '';
+          if (span.startsWith('<')) {
+            spanRegExp.lastIndex = 0;
+            result.syllables.push({
+              span: spanRegExp.exec(span)?.[1] || span,
+              stress: true,
+              pronounce,
+            });
+          } else {
+            result.syllables.push({ span, pronounce });
           }
         }
       }
@@ -98,12 +98,19 @@ export const getWordSyllables = async (word: string) => {
       res = await fetch(result.pronounce);
       if (res.arrayBufferResult) {
         const savedPath = await saveUploadFile(Buffer.from(res.arrayBufferResult));
-        sqlRow = await prismaClient.upload.create({
-          data: {
+        sqlRow = await prismaClient.upload.upsert({
+          create: {
             fileName: `${word}.mp3`,
             savePath: savedPath,
             uploadUserId: systemUserId.dictSyllablePronounce,
           },
+          where: {
+            uploadUserId_savePath: {
+              savePath: savedPath,
+              uploadUserId: systemUserId.dictSyllablePronounce,
+            },
+          },
+          update: {},
         });
       } else {
         throw new Error('获取发音mp3文件失败');
